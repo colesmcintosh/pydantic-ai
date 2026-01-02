@@ -28,6 +28,7 @@ from ..builtin_tools import (
     ImageGenerationTool,
     MCPServerTool,
     WebSearchTool,
+    XSearchTool,
 )
 from ..exceptions import UserError
 from ..messages import (
@@ -448,14 +449,18 @@ class OpenAIChatModel(Model):
 
     @classmethod
     def supported_builtin_tools(cls) -> frozenset[type[AbstractBuiltinTool]]:
-        """Return the set of builtin tool types this model can handle."""
-        return frozenset({WebSearchTool})
+        """Return the set of builtin tool types this model can handle.
+
+        Note: XSearchTool is handled here for Grok provider but only enabled via Grok profile.
+        """
+        return frozenset({WebSearchTool, XSearchTool})
 
     @cached_property
     def profile(self) -> ModelProfile:
         """The model profile.
 
         WebSearchTool is only supported if openai_chat_supports_web_search is True.
+        XSearchTool is only supported by Grok provider (controlled via provider profile).
         """
         _profile = super().profile
         openai_profile = OpenAIModelProfile.from_profile(_profile)
@@ -760,7 +765,17 @@ class OpenAIChatModel(Model):
         return _map_usage(response, self._provider.name, self._provider.base_url, self.model_name)
 
     def _get_tools(self, model_request_parameters: ModelRequestParameters) -> list[chat.ChatCompletionToolParam]:
-        return [self._map_tool_definition(r) for r in model_request_parameters.tool_defs.values()]
+        tools: list[chat.ChatCompletionToolParam] = [
+            self._map_tool_definition(r) for r in model_request_parameters.tool_defs.values()
+        ]
+
+        # Add X search tool for Grok provider
+        x_search_tool = self._get_x_search_tool(model_request_parameters)
+        if x_search_tool is not None:
+            # X AI accepts x_search as a tool in the tools array
+            tools.append(cast(chat.ChatCompletionToolParam, x_search_tool))
+
+        return tools
 
     def _get_web_search_options(self, model_request_parameters: ModelRequestParameters) -> WebSearchOptions | None:
         for tool in model_request_parameters.builtin_tools:
@@ -774,6 +789,32 @@ class OpenAIChatModel(Model):
                         ),
                     )
                 return WebSearchOptions(search_context_size=tool.search_context_size)
+        return None
+
+    def _get_x_search_tool(self, model_request_parameters: ModelRequestParameters) -> dict[str, Any] | None:
+        """Get the X search tool configuration for Grok provider.
+
+        Returns:
+            A dict with the x_search tool configuration, or None if XSearchTool is not in builtin_tools.
+        """
+        for tool in model_request_parameters.builtin_tools:
+            if isinstance(tool, XSearchTool):
+                x_search_params: dict[str, Any] = {'type': 'x_search'}
+
+                if tool.allowed_x_handles is not None:
+                    x_search_params['allowed_x_handles'] = tool.allowed_x_handles
+                if tool.excluded_x_handles is not None:
+                    x_search_params['excluded_x_handles'] = tool.excluded_x_handles
+                if tool.from_date is not None:
+                    x_search_params['from_date'] = tool.from_date
+                if tool.to_date is not None:
+                    x_search_params['to_date'] = tool.to_date
+                if tool.enable_image_understanding:
+                    x_search_params['enable_image_understanding'] = True
+                if tool.enable_video_understanding:
+                    x_search_params['enable_video_understanding'] = True
+
+                return x_search_params
         return None
 
     @dataclass
@@ -1165,7 +1206,9 @@ class OpenAIResponsesModel(Model):
     @classmethod
     def supported_builtin_tools(cls) -> frozenset[type[AbstractBuiltinTool]]:
         """Return the set of builtin tool types this model can handle."""
-        return frozenset({WebSearchTool, CodeExecutionTool, FileSearchTool, MCPServerTool, ImageGenerationTool})
+        return frozenset(
+            {WebSearchTool, CodeExecutionTool, FileSearchTool, MCPServerTool, ImageGenerationTool, XSearchTool}
+        )
 
     async def request(
         self,
@@ -1564,6 +1607,24 @@ class OpenAIResponsesModel(Model):
                         size=size,
                     )
                 )
+            elif isinstance(tool, XSearchTool):
+                # X Search tool for Grok provider (X AI Responses API)
+                x_search_tool: dict[str, Any] = {'type': 'x_search'}
+
+                if tool.allowed_x_handles is not None:
+                    x_search_tool['allowed_x_handles'] = tool.allowed_x_handles
+                if tool.excluded_x_handles is not None:
+                    x_search_tool['excluded_x_handles'] = tool.excluded_x_handles
+                if tool.from_date is not None:
+                    x_search_tool['from_date'] = tool.from_date
+                if tool.to_date is not None:
+                    x_search_tool['to_date'] = tool.to_date
+                if tool.enable_image_understanding:
+                    x_search_tool['enable_image_understanding'] = True
+                if tool.enable_video_understanding:
+                    x_search_tool['enable_video_understanding'] = True
+
+                tools.append(cast(responses.ToolParam, x_search_tool))
             else:
                 raise UserError(  # pragma: no cover
                     f'`{tool.__class__.__name__}` is not supported by `OpenAIResponsesModel`. If it should be, please file an issue.'

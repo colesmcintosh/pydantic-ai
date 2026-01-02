@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from .._json_schema import JsonSchema, JsonSchemaTransformer
+from ..builtin_tools import SUPPORTED_BUILTIN_TOOLS, XSearchTool
 from ..exceptions import UserError
 from . import ModelProfile
 
@@ -124,6 +125,9 @@ def openai_model_profile(model_name: str) -> ModelProfile:
     # See https://github.com/pydantic/pydantic-ai/issues/974 for more details.
     openai_system_prompt_role = 'user' if model_name.startswith('o1-mini') else None
 
+    # OpenAI does not support XSearchTool - that's Grok-specific
+    openai_supported_tools = SUPPORTED_BUILTIN_TOOLS - {XSearchTool}
+
     return OpenAIModelProfile(
         json_schema_transformer=OpenAIJsonSchemaTransformer,
         supports_json_schema_output=True,
@@ -133,6 +137,7 @@ def openai_model_profile(model_name: str) -> ModelProfile:
         openai_system_prompt_role=openai_system_prompt_role,
         openai_chat_supports_web_search=supports_web_search,
         openai_supports_encrypted_reasoning_content=is_reasoning_model,
+        supported_builtin_tools=openai_supported_tools,
     )
 
 

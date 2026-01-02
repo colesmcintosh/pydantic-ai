@@ -20,6 +20,7 @@ __all__ = (
     'MemoryTool',
     'MCPServerTool',
     'FileSearchTool',
+    'XSearchTool',
     'BUILTIN_TOOL_TYPES',
     'DEPRECATED_BUILTIN_TOOLS',
     'SUPPORTED_BUILTIN_TOOLS',
@@ -451,6 +452,70 @@ class FileSearchTool(AbstractBuiltinTool):
     """
 
     kind: str = 'file_search'
+    """The kind of tool."""
+
+
+@dataclass(kw_only=True)
+class XSearchTool(AbstractBuiltinTool):
+    """A builtin tool that allows your agent to search X (Twitter) for information.
+
+    Enables keyword search, semantic search, user search, and thread fetch on X.
+    The `grok-4-1-fast` model is specifically trained for agentic search workflows.
+
+    Supported by:
+
+    * Grok (X AI)
+    """
+
+    allowed_x_handles: list[str] | None = None
+    """If provided, only posts from these X handles will be included in search results.
+
+    Maximum of 10 handles. Cannot be used together with `excluded_x_handles`.
+
+    See <https://docs.x.ai/docs/guides/tools/search-tools#only-consider-x-posts-from-specific-handles>
+    """
+
+    excluded_x_handles: list[str] | None = None
+    """If provided, posts from these X handles will be excluded from search results.
+
+    Maximum of 10 handles. Cannot be used together with `allowed_x_handles`.
+
+    See <https://docs.x.ai/docs/guides/tools/search-tools#exclude-x-posts-from-specific-handles>
+    """
+
+    from_date: str | None = None
+    """Start date for search range in ISO8601 format (YYYY-MM-DD).
+
+    If specified without `to_date`, searches from this date to today.
+
+    See <https://docs.x.ai/docs/guides/tools/search-tools#date-range>
+    """
+
+    to_date: str | None = None
+    """End date for search range in ISO8601 format (YYYY-MM-DD).
+
+    If specified without `from_date`, searches all data up to this date.
+
+    See <https://docs.x.ai/docs/guides/tools/search-tools#date-range>
+    """
+
+    enable_image_understanding: bool = False
+    """If True, the agent can analyze images encountered in X posts using the `view_image` tool.
+
+    Note: Enabling this increases token usage as images are processed and represented as image tokens.
+
+    See <https://docs.x.ai/docs/guides/tools/search-tools#enable-image-understanding-1>
+    """
+
+    enable_video_understanding: bool = False
+    """If True, the agent can analyze videos encountered in X posts using the `view_x_video` tool.
+
+    Note: Enabling this increases token usage as video content is processed and represented as tokens.
+
+    See <https://docs.x.ai/docs/guides/tools/search-tools#enable-video-understanding>
+    """
+
+    kind: str = 'x_search'
     """The kind of tool."""
 
 

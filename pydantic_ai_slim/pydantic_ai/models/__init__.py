@@ -1125,7 +1125,7 @@ def infer_model(  # noqa: C901
         from .openai import OpenAIChatModel
 
         return OpenAIChatModel(model_name, provider=provider)
-    elif model_kind == 'openai-responses':
+    elif model_kind in ('openai-responses', 'grok-responses'):
         from .openai import OpenAIResponsesModel
 
         return OpenAIResponsesModel(model_name, provider=provider)

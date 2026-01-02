@@ -11,6 +11,7 @@ from pydantic_ai.builtin_tools import (
     UrlContextTool,  # pyright: ignore[reportDeprecated]
     WebFetchTool,
     WebSearchTool,
+    XSearchTool,
 )
 from pydantic_ai.exceptions import UserError
 from pydantic_ai.models import Model
@@ -146,3 +147,101 @@ def test_url_context_discriminated_union():
     assert isinstance(results[1], WebFetchTool)
     assert results[1].kind == 'web_fetch'
     assert results[1].max_uses == 2
+
+
+# XSearchTool tests
+
+
+@pytest.mark.parametrize(
+    'model',
+    ('bedrock', 'mistral', 'cohere', 'huggingface', 'groq', 'anthropic', 'openai', 'test', 'outlines'),
+    indirect=True,
+)
+async def test_builtin_tools_not_supported_x_search(model: Model, allow_model_requests: None):
+    """Test that XSearchTool raises UserError for providers that don't support it."""
+    agent = Agent(model=model, builtin_tools=[XSearchTool()])
+
+    with pytest.raises(UserError):
+        await agent.run('Search X for latest news')
+
+
+@pytest.mark.parametrize(
+    'model', ('bedrock', 'mistral', 'huggingface', 'groq', 'anthropic', 'openai', 'outlines'), indirect=True
+)
+async def test_builtin_tools_not_supported_x_search_stream(model: Model, allow_model_requests: None):
+    """Test that XSearchTool raises UserError for streaming with unsupported providers."""
+    agent = Agent(model=model, builtin_tools=[XSearchTool()])
+
+    with pytest.raises(UserError):
+        async with agent.run_stream('Search X for latest news'):
+            ...  # pragma: no cover
+
+
+def test_x_search_tool_creation():
+    """Test that XSearchTool can be created with various parameters."""
+    # Default creation
+    tool = XSearchTool()
+    assert tool.kind == 'x_search'
+    assert tool.allowed_x_handles is None
+    assert tool.excluded_x_handles is None
+    assert tool.from_date is None
+    assert tool.to_date is None
+    assert tool.enable_image_understanding is False
+    assert tool.enable_video_understanding is False
+
+    # With all parameters
+    tool_full = XSearchTool(
+        allowed_x_handles=['user1', 'user2'],
+        from_date='2025-01-01',
+        to_date='2025-06-01',
+        enable_image_understanding=True,
+        enable_video_understanding=True,
+    )
+    assert tool_full.allowed_x_handles == ['user1', 'user2']
+    assert tool_full.from_date == '2025-01-01'
+    assert tool_full.to_date == '2025-06-01'
+    assert tool_full.enable_image_understanding is True
+    assert tool_full.enable_video_understanding is True
+
+
+def test_x_search_tool_serialization():
+    """Test that XSearchTool can be serialized and deserialized."""
+    adapter = TypeAdapter(AbstractBuiltinTool)
+
+    tool = XSearchTool(
+        allowed_x_handles=['elonmusk'],
+        from_date='2025-01-01',
+        enable_image_understanding=True,
+    )
+
+    # Serialize
+    serialized = adapter.dump_python(tool)
+    assert serialized['kind'] == 'x_search'
+    assert serialized['allowed_x_handles'] == ['elonmusk']
+    assert serialized['from_date'] == '2025-01-01'
+    assert serialized['enable_image_understanding'] is True
+
+    # Deserialize
+    payload = {
+        'kind': 'x_search',
+        'excluded_x_handles': ['spammer'],
+        'to_date': '2025-12-31',
+        'enable_video_understanding': True,
+    }
+    result = adapter.validate_python(payload)
+    assert isinstance(result, XSearchTool)
+    assert result.excluded_x_handles == ['spammer']
+    assert result.to_date == '2025-12-31'
+    assert result.enable_video_understanding is True
+
+
+def test_x_search_tool_unique_id():
+    """Test that XSearchTool has correct unique_id."""
+    tool = XSearchTool()
+    assert tool.unique_id == 'x_search'
+
+
+def test_x_search_tool_label():
+    """Test that XSearchTool has correct label."""
+    tool = XSearchTool()
+    assert tool.label == 'X Search'
