@@ -69,6 +69,12 @@ def test_grok_model_profile_responses():
 def test_grok_x_search_tool_supported():
     """Test that XSearchTool is supported by Grok provider."""
     provider = GrokProvider(api_key='api-key')
-    model = OpenAIChatModel('grok-4-1-fast', provider=provider)
+    model = OpenAIResponsesModel('grok-4-1-fast', provider=provider)
     # XSearchTool should be in the profile's supported builtin tools
     assert XSearchTool in model.profile.supported_builtin_tools
+
+
+def test_grok_chat_does_not_support_x_search():
+    provider = GrokProvider(api_key='api-key')
+    model = OpenAIChatModel('grok-4-1-fast', provider=provider)
+    assert XSearchTool not in model.profile.supported_builtin_tools

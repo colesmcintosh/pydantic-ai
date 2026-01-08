@@ -791,17 +791,14 @@ asyncio.run(main())
 
 ## X Search Tool
 
-The [`XSearchTool`][pydantic_ai.builtin_tools.XSearchTool] enables your agent to search X (Twitter) for posts, user profiles, and threads. This is a unique capability only available through X AI's Grok models, providing real-time access to social media data.
-
-!!! important "Requires Grok Responses API"
-    XSearchTool requires the Grok Responses API. Use `grok:model-name` as the model string (e.g., `grok:grok-4-1-fast`).
+The [`XSearchTool`][pydantic_ai.builtin_tools.XSearchTool] enables your agent to search X (Twitter) for posts, user profiles, and threads. This capability is available through X AI's Grok models and requires the Grok Responses API (`grok:model-name`, e.g. `grok:grok-4-1-fast`).
 
 ### Provider Support
 
 | Provider | Supported | Notes |
 |----------|-----------|-------|
 | Grok (Responses API) | ✅ | Full feature support. Use `grok:grok-4-1-fast` for best results. |
-| Grok (Chat API) | ❌ | Use `grok-chat:` prefix only if you explicitly need the legacy chat API. |
+| Grok (Chat API) | ❌ | Not supported. Use `grok:` (Responses API). |
 | OpenAI | ❌ | Not supported |
 | Anthropic | ❌ | Not supported |
 | Google | ❌ | Not supported |
@@ -817,7 +814,6 @@ The [`XSearchTool`][pydantic_ai.builtin_tools.XSearchTool] enables your agent to
 ```py {title="x_search_basic.py" test="skip"}
 from pydantic_ai import Agent, XSearchTool
 
-# Note: Use 'grok:' prefix for X Search support
 agent = Agent('grok:grok-4-1-fast', builtin_tools=[XSearchTool()])
 
 result = agent.run_sync('What are people saying about AI on X today?')
@@ -829,7 +825,9 @@ _(This example requires a valid `GROK_API_KEY` environment variable)_
 
 ### Configuration Options
 
-The `XSearchTool` supports several configuration parameters for filtering search results:
+The `XSearchTool` supports several configuration parameters for filtering search results. You can only use either
+`allowed_x_handles` or `excluded_x_handles`, not both in the same request. Enabling image or video understanding
+increases token usage as media content is processed and represented in the model's context.
 
 ```py {title="x_search_configured.py" test="skip"}
 from pydantic_ai import Agent, XSearchTool
@@ -864,12 +862,6 @@ _(This example requires a valid `GROK_API_KEY` environment variable)_
 | `to_date` | End date for search range in ISO8601 format (YYYY-MM-DD). |
 | `enable_image_understanding` | If True, the agent can analyze images in X posts. Increases token usage. |
 | `enable_video_understanding` | If True, the agent can analyze videos in X posts. Increases token usage. |
-
-!!! note "Handle Filtering"
-    You can only use either `allowed_x_handles` or `excluded_x_handles`, not both in the same request.
-
-!!! note "Multimedia Understanding"
-    Enabling `enable_image_understanding` or `enable_video_understanding` increases token usage as media content is processed and represented as tokens in the model's context.
 
 ## API Reference
 
