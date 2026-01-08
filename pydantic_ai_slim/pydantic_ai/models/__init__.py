@@ -530,7 +530,7 @@ OpenAIChatCompatibleProvider = TypeAliasType(
         'cerebras',
         'fireworks',
         'github',
-        'grok',
+        'grok-chat',
         'heroku',
         'moonshotai',
         'ollama',
@@ -1121,14 +1121,14 @@ def infer_model(  # noqa: C901
         from .cerebras import CerebrasModel
 
         return CerebrasModel(model_name, provider=provider)
+    elif model_kind in ('openai-responses', 'grok', 'grok-responses'):
+        from .openai import OpenAIResponsesModel
+
+        return OpenAIResponsesModel(model_name, provider=provider)
     elif model_kind in ('openai-chat', 'openai', *get_args(OpenAIChatCompatibleProvider.__value__)):
         from .openai import OpenAIChatModel
 
         return OpenAIChatModel(model_name, provider=provider)
-    elif model_kind in ('openai-responses', 'grok-responses'):
-        from .openai import OpenAIResponsesModel
-
-        return OpenAIResponsesModel(model_name, provider=provider)
     elif model_kind in ('google', 'google-gla', 'google-vertex'):
         from .google import GoogleModel
 

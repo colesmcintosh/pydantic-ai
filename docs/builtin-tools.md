@@ -794,14 +794,14 @@ asyncio.run(main())
 The [`XSearchTool`][pydantic_ai.builtin_tools.XSearchTool] enables your agent to search X (Twitter) for posts, user profiles, and threads. This is a unique capability only available through X AI's Grok models, providing real-time access to social media data.
 
 !!! important "Requires Grok Responses API"
-    XSearchTool requires the Grok Responses API. Use `grok-responses:model-name` as the model string (e.g., `grok-responses:grok-4-1-fast`).
+    XSearchTool requires the Grok Responses API. Use `grok:model-name` as the model string (e.g., `grok:grok-4-1-fast`).
 
 ### Provider Support
 
 | Provider | Supported | Notes |
 |----------|-----------|-------|
-| Grok (Responses API) | ✅ | Full feature support. Use `grok-responses:grok-4-1-fast` for best results. |
-| Grok (Chat API) | ❌ | Use `grok-responses:` prefix instead |
+| Grok (Responses API) | ✅ | Full feature support. Use `grok:grok-4-1-fast` for best results. |
+| Grok (Chat API) | ❌ | Use `grok-chat:` prefix only if you explicitly need the legacy chat API. |
 | OpenAI | ❌ | Not supported |
 | Anthropic | ❌ | Not supported |
 | Google | ❌ | Not supported |
@@ -817,8 +817,8 @@ The [`XSearchTool`][pydantic_ai.builtin_tools.XSearchTool] enables your agent to
 ```py {title="x_search_basic.py" test="skip"}
 from pydantic_ai import Agent, XSearchTool
 
-# Note: Use 'grok-responses:' prefix for X Search support
-agent = Agent('grok-responses:grok-4-1-fast', builtin_tools=[XSearchTool()])
+# Note: Use 'grok:' prefix for X Search support
+agent = Agent('grok:grok-4-1-fast', builtin_tools=[XSearchTool()])
 
 result = agent.run_sync('What are people saying about AI on X today?')
 print(result.output)
@@ -835,7 +835,7 @@ The `XSearchTool` supports several configuration parameters for filtering search
 from pydantic_ai import Agent, XSearchTool
 
 agent = Agent(
-    'grok-responses:grok-4-1-fast',
+    'grok:grok-4-1-fast',
     builtin_tools=[
         XSearchTool(
             allowed_x_handles=['pydantic', 'samuel_colvin'],  # Only search these accounts

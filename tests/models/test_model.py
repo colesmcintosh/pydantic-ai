@@ -203,6 +203,14 @@ TEST_CASES = [
         'grok-3',
         'grok',
         'openai',
+        OpenAIResponsesModel,
+    ),
+    pytest.param(
+        {'GROK_API_KEY': 'grok-api-key'},
+        'grok-chat:grok-3',
+        'grok-3',
+        'grok',
+        'openai',
         OpenAIChatModel,
     ),
     pytest.param(
