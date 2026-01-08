@@ -472,16 +472,18 @@ Or initialise the model and provider directly:
 
 ```python
 from pydantic_ai import Agent
-from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.models.openai import OpenAIResponsesModel
 from pydantic_ai.providers.grok import GrokProvider
 
-model = OpenAIChatModel(
+model = OpenAIResponsesModel(
     'grok-2-1212',
     provider=GrokProvider(api_key='your-xai-api-key'),
 )
 agent = Agent(model)
 ...
 ```
+
+If you explicitly need the legacy chat API, use the `grok-chat:` prefix with [`OpenAIChatModel`][pydantic_ai.models.openai.OpenAIChatModel].
 
 ### MoonshotAI
 
